@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "This is the serverside of SAIMS",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/git162/SAIMS.git"
+  },
+  "keywords": [
+    "server",
+    "backend",
+    "SAIMS"
+  ],
+  "author": "Sudeep Das",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/git162/SAIMS/issues"
+  },
+  "homepage": "https://github.com/git162/SAIMS#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
