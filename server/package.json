@@ -1,10 +1,13 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "This is the serverside of SAIMS",
+  "description": "Serverside of SAIMS",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts node src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -15,13 +18,19 @@
     "backend",
     "SAIMS"
   ],
-  "author": "Sudeep Das",
+  "author": "Sudeep",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/git162/SAIMS/issues"
   },
   "homepage": "https://github.com/git162/SAIMS#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/readline-sync": "^1.4.8",
+    "typescript": "^5.7.3"
+  },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "readline-sync": "^1.4.10"
   }
 }
