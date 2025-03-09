@@ -7,7 +7,10 @@
     "test": "jest",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts node src/index.ts"
+    "dev": "npx tsc && npx nodemon dist/index.js"
+  },
+  "prisma": {
+    "schema": "src/db/postgres/prisma/schema.prisma"
   },
   "repository": {
     "type": "git",
@@ -25,12 +28,27 @@
   },
   "homepage": "https://github.com/git162/SAIMS#readme",
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
-    "@types/readline-sync": "^1.4.8",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/nodemailer": "^6.4.17",
+    "@types/otp-generator": "^4.0.2",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.3.1",
+    "ts-node": "^10.9.2",
+    "tsc-watch": "^6.2.1",
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@prisma/client": "^6.3.1",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "readline-sync": "^1.4.10"
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.0",
+    "otp-generator": "^4.0.1",
+    "redis": "^4.7.0"
   }
 }

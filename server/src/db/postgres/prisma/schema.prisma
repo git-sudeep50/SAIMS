@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id             String     @id @default(uuid())
+  name           String
+  email          String     @unique
+  phoneNumber    String
+  dob            DateTime
+  address        String
+  gender         String
+  enrollmentNumber String @unique
+  enrollmentYear Int
+  currentSemester Semester @relation(fields: [currentSemesterId], references: [id])
+  currentSemesterId String
+  department     Department @relation(fields: [departmentId], references: [id])
+  departmentId   String
+  hostel         String
+
+  // Many-to-Many Courses Enrolled
+  courses        Course[] @relation(name: "StudentCourses")
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Admin {
+  id            String      @id @default(uuid())
+  name          String
+  email         String      @unique
+  password      String
+  role          String      @default("ADMIN")
+  
+  // Admin belongs to a Department
+  department    Department  @relation(fields: [departmentId], references: [id])
+  departmentId  String
+
+  // Courses managed by Admin
+  courses       Course[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Course {
+  id            String      @id @default(uuid())
+  name          String
+  code          String      @unique
+  credits       Int
+  description   String?
+  
+  // Relation to Department
+  department    Department  @relation(fields: [departmentId], references: [id])
+  departmentId  String
+
+  // Relation to Admin who created the course
+  createdBy     Admin       @relation(fields: [adminId], references: [id])
+  adminId       String
+
+  // Relation to Semester where course is running
+  semester      Semester?   @relation(fields: [semesterId], references: [id])
+  semesterId    String?
+
+  // Many-to-Many with Students
+  students      Student[]   @relation(name: "StudentCourses")
+
+  // Many-to-Many with Instructors
+  instructors   Instructor[] @relation(name: "InstructorCourses")
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Instructor {
+  id                String     @id @default(uuid())
+  name              String
+  email             String     @unique
+  phoneNumber       String
+  officeNumber      String
+
+  // Faculty of a department
+  department        Department? @relation(name: "FacultyDepartment", fields: [departmentId], references: [id])
+  departmentId      String?
+
+  // Head of Department relation
+  headOfDepartment  Department? @relation(name: "HeadOfDepartment", fields: [headOfDepartmentId], references: [id])
+  headOfDepartmentId String? @unique
+
+  // Many-to-Many with Courses
+  courses          Course[] @relation(name: "InstructorCourses")
+
+  courseAdvisor     CourseAdvisor?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  School            School[]
+}
+
+model CourseAdvisor {
+  id            String      @id @default(uuid())
+  instructor    Instructor  @relation(fields: [instructorId], references: [id])
+  instructorId  String @unique
+  department    Department  @relation(fields: [departmentId], references: [id])
+  departmentId  String
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Department {
+  id            String      @id @default(uuid())
+  name          String
+
+  school        School      @relation(fields: [schoolId], references: [id])
+  schoolId      String
+
+  // Faculty members
+  faculty       Instructor[] @relation(name: "FacultyDepartment")
+
+  // Head of Department (only one)
+  head          Instructor?  @relation(name: "HeadOfDepartment")
+
+  courseAdvisors CourseAdvisor[]
+  students      Student[]
+  courses       Course[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  Admin Admin[]
+}
+
+model School {
+  id           String      @id @default(uuid())
+  name         String
+  dean         Instructor? @relation(fields: [deanId], references: [id])
+  deanId       String?
+
+  departments  Department[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Semester {
+  id           String      @id @default(uuid())
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+
+  students     Student[]
+  courses      Course[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Authentication{
+ id String @id @default(uuid())
+ email String @unique
+ password String?
+ temporaryPassword String?
+}
