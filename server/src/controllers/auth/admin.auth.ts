@@ -1,8 +1,8 @@
-import {Request, Response,RequestHandler} from "express";
+import { Request, Response,RequestHandler } from "express";
 import { prisma } from "../../db/postgres/prismaClient";
 import otpGenerator from "otp-generator";
 import { redisClient } from "../../index";
-import { sendMail } from "../mail.controller";
+import { sendMailOTP } from "../mail.controller";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -27,7 +27,7 @@ export const checkAdmin:RequestHandler = async (req:Request, res:Response) => {
 
 
     await redisClient.setEx(`otp:${email}`, 600, OTP);
-    await sendMail(email, OTP);
+    await sendMailOTP(email, OTP);
 
     res.status(200).json({
       msg: "OTP sent successfully to your email",
@@ -55,7 +55,6 @@ export const registerAdmin:RequestHandler = async (req:Request, res:Response) =>
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
     await prisma.authentication.update({
       where: { email: email },
       data: { password: hashedPassword }
