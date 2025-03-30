@@ -5,10 +5,11 @@ import { sendMailMessage } from "./mail.controller";
 
 export const createStudent: RequestHandler = async (req:Request, res:Response) => {
     try {
-        const { rollNo } = req.body;
-        const email = rollNo.toLowerCase() + "@tezu.ac.in";
+        const { rollNo, email } = req.body;
 
-        const existingUser = await prisma.authentication.findUnique({ where: { email } });
+        const defaultEmail = rollNo ? `${rollNo.toLowerCase()}@tezu.ac.in` : email;
+
+        const existingUser = await prisma.authentication.findUnique({ where: { email: defaultEmail } });
         if (existingUser) {
             res.status(400).json({ msg: "Student account already exists" });
             return;
@@ -16,10 +17,10 @@ export const createStudent: RequestHandler = async (req:Request, res:Response) =
 
         //transaction to rollback if email fails
         await prisma.$transaction(async (tx) => {
-            const newUser = await tx.authentication.create({ data: { email } });
+            const newUser = await tx.authentication.create({ data: { email: defaultEmail } });
 
             // Send email (throws error if fails, so account won't be created)
-            await sendMailMessage(email, `Your account was created with roll number ${rollNo.toUpperCase()}.`);
+            await sendMailMessage(defaultEmail, `Your account was created with email ${defaultEmail}.`);
         });
 
         res.status(201).json({ msg: "Student account created successfully" });

@@ -22,6 +22,7 @@ export const checkAdmin:RequestHandler = async (req:Request, res:Response) => {
     const OTP = otpGenerator.generate(6, {
       digits: true,
       upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
       specialChars: false,
     });
 
