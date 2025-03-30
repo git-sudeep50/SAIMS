@@ -162,9 +162,24 @@ model Semester {
   updatedAt    DateTime @updatedAt
 }
 
-model Authentication{
- id String @id @default(uuid())
- email String @unique
- password String?
- temporaryPassword String?
+enum Role {
+  STUDENT
+  ADMIN
+  ADVISOR
+  INSTRUCTOR
 }
+
+model Authentication {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String?
+  roles    RoleAssignment[]
+}
+
+model RoleAssignment {
+  id     String @id @default(uuid())
+  user   Authentication @relation(fields: [userId], references: [id],  onDelete: Cascade)
+  userId String
+  role   Role
+}
+

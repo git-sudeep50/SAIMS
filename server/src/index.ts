@@ -1,5 +1,10 @@
 import express, { Request, Response } from 'express';
+import authRouter from './routes/auth.routes';
 import adminRouter from './routes/admin.routes';
+import advisorRouter from './routes/courseAdvisor.routes';
+import instructorRouter from './routes/courseInstructor.routes';
+import { authorizeRoles } from './middlewares/access.middlewares';
+import studentRouter from './routes/student.routes';
 import { createClient } from "redis";
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -28,7 +33,10 @@ app.get('/api', (req: Request, res: Response) => {
     })
 });
 
-app.use('/api/admin', adminRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/admin', authorizeRoles("ADMIN"), adminRouter);
+app.use('/api/student', studentRouter);
+app.use('/api/advisor', advisorRouter);
 
 // Use a Default Port in Case of Missing Env
 const PORT = process.env.SERVER_PORT || 3000;

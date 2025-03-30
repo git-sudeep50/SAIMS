@@ -1,4 +1,7 @@
 import { Router } from 'express';
+// import { checkStudentAccount, loginStudent, registerStudent } from '../controllers/auth/student.auth';
 const router = Router();
 
-router.route('check-acconunt', checkStudentAccount);
+
+
+export default router;

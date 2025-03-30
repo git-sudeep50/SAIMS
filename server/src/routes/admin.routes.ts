@@ -1,12 +1,12 @@
 import {Router} from 'express';
-import {checkAdmin, registerAdmin, loginAdmin} from "../controllers/auth/admin.auth";
-import { createStudent } from '../controllers/admin.controllers';
+import { createEmployee, createStudent } from '../controllers/accounts.controllers';
+
 const router = Router();
 
-router.post('/verify',checkAdmin)
-router.post('/register',registerAdmin);
-router.post('/login',loginAdmin);
+
 router.post('/create-student',createStudent);
+router.post('/create-advisor',createEmployee("ADVISOR"));
+router.post('/create-instructor',createEmployee("INSTRUCTOR"));
 
 
 export default router;
