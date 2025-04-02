@@ -68,7 +68,7 @@ export const registerUser = async (req: Request, res: Response) => {
     });
 
     redisClient.del(`otp:${email}`);
-    res.status(201).json({ msg: "Advisor registered successfully" });
+    res.status(201).json({ msg: "User registered successfully" });
   } catch (error: any) {
     res.status(500).json({
       msg: "Some error occurred",

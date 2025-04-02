@@ -8,145 +8,144 @@ datasource db {
 }
 
 model Student {
-  id             String     @id @default(uuid())
-  name           String
-  email          String     @unique
-  phoneNumber    String
-  dob            DateTime
-  address        String
-  gender         String
-  enrollmentNumber String @unique
-  enrollmentYear Int
-  currentSemester Semester @relation(fields: [currentSemesterId], references: [id])
+  id               String    @id @default(uuid())
+  name             String
+  email            String    @unique
+  phoneNumber      String
+  dob              DateTime
+  address          String
+  gender           String
+  enrollmentNumber String    @unique
+  enrollmentYear   Int
+
+  // Relation to Department
+  department       Department @relation(fields: [departmentId], references: [id])
+  departmentId     String
+
+  // Relation to Programme & Semester
+  programme       Programme   @relation(fields: [programmeId], references: [id])
+  programmeId     String
+  currentSemester Semester    @relation(fields: [currentSemesterId], references: [id])
   currentSemesterId String
-  department     Department @relation(fields: [departmentId], references: [id])
-  departmentId   String
-  hostel         String
 
   // Many-to-Many Courses Enrolled
-  courses        Course[] @relation(name: "StudentCourses")
-
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
-
-model Admin {
-  id            String      @id @default(uuid())
-  name          String
-  email         String      @unique
-  password      String
-  role          String      @default("ADMIN")
+  courses         Course[]    @relation(name: "StudentCourses")
   
-  // Admin belongs to a Department
-  department    Department  @relation(fields: [departmentId], references: [id])
-  departmentId  String
 
-  // Courses managed by Admin
-  courses       Course[]
-
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt @default(now())
 }
 
-model Course {
-  id            String      @id @default(uuid())
-  name          String
-  code          String      @unique
-  credits       Int
-  description   String?
-  
-  // Relation to Department
-  department    Department  @relation(fields: [departmentId], references: [id])
-  departmentId  String
-
-  // Relation to Admin who created the course
-  createdBy     Admin       @relation(fields: [adminId], references: [id])
-  adminId       String
-
-  // Relation to Semester where course is running
-  semester      Semester?   @relation(fields: [semesterId], references: [id])
-  semesterId    String?
-
-  // Many-to-Many with Students
-  students      Student[]   @relation(name: "StudentCourses")
-
-  // Many-to-Many with Instructors
-  instructors   Instructor[] @relation(name: "InstructorCourses")
-
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-}
-
-model Instructor {
-  id                String     @id @default(uuid())
+model Employee {
+  id                String      @id @default(uuid())
   name              String
-  email             String     @unique
-  phoneNumber       String
-  officeNumber      String
-
-  // Faculty of a department
-  department        Department? @relation(name: "FacultyDepartment", fields: [departmentId], references: [id])
+  email             String      @unique
+  phone             String?      
+  // Admin belongs to a Department
+  department        Department? @relation(fields: [departmentId], references: [id])
   departmentId      String?
 
-  // Head of Department relation
-  headOfDepartment  Department? @relation(name: "HeadOfDepartment", fields: [headOfDepartmentId], references: [id])
-  headOfDepartmentId String? @unique
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt @default(now())
+  schools School[]
+  users Authentication[]
 
-  // Many-to-Many with Courses
-  courses          Course[] @relation(name: "InstructorCourses")
-
-  courseAdvisor     CourseAdvisor?
-
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  School            School[]
+  // Relations for Instructor and Course Advisor
+  instructorMappings InstructorMapping[]
+  advisorMappings    AdvisorMapping[]
+ 
 }
 
-model CourseAdvisor {
-  id            String      @id @default(uuid())
-  instructor    Instructor  @relation(fields: [instructorId], references: [id])
-  instructorId  String @unique
-  department    Department  @relation(fields: [departmentId], references: [id])
-  departmentId  String
+model Programme {
+  id           String    @id @default(uuid())
+  name         String
+  duration     Int       // Number of years (e.g., 4 for B.Tech)
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+  semesters    Semester[]
+  students Student[]
+  advisors AdvisorMapping[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt @default(now())
+} 
+
+model Course {
+  id           String    @id @default(uuid())
+  name         String
+  code         String    @unique
+  credits      Int
+  description  String?
+
+  // Relation to Department
+  department   Department  @relation(fields: [departmentId], references: [id])
+  departmentId String
+
+  // Relation to Semester
+  semester     Semester?   @relation(fields: [semesterId], references: [id])
+  semesterId   String?
+
+  // Many-to-Many with Students
+  students     Student[]   @relation(name: "StudentCourses")
+
+  // Many-to-Many with Instructors
+  instructors  InstructorMapping[]
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt @default(now())
+}
+
+model InstructorMapping {
+  id            String    @id @default(uuid())
+  instructor    Employee  @relation(fields: [instructorId], references: [id])
+  instructorId  String
+
+  course        Course    @relation(fields: [courseId], references: [id])
+  courseId      String
+
+  createdAt     DateTime  @default(now())
+}
+
+model AdvisorMapping {
+  id            String    @id @default(uuid())
+  advisor       Employee  @relation(fields: [advisorId], references: [id])
+  advisorId     String
+
+  programme     Programme @relation(fields: [programmeId], references: [id])
+  programmeId   String
+
+  semester      Semester  @relation(fields: [semesterId], references: [id])
+  semesterId    String
+
+  createdAt     DateTime  @default(now())
 }
 
 model Department {
-  id            String      @id @default(uuid())
-  name          String
+  id           String      @id @default(uuid())
+  name         String
 
-  school        School      @relation(fields: [schoolId], references: [id])
-  schoolId      String
+  school       School      @relation(fields: [schoolId], references: [id])
+  schoolId     String
 
-  // Faculty members
-  faculty       Instructor[] @relation(name: "FacultyDepartment")
+  students     Student[]
+  courses      Course[]
+  programmes   Programme[]
+  employee Employee[]
 
-  // Head of Department (only one)
-  head          Instructor?  @relation(name: "HeadOfDepartment")
-
-  courseAdvisors CourseAdvisor[]
-  students      Student[]
-  courses       Course[]
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  Admin Admin[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt @default(now())
 }
 
 model School {
   id           String      @id @default(uuid())
   name         String
-  dean         Instructor? @relation(fields: [deanId], references: [id])
+  dean         Employee? @relation(fields: [deanId], references: [id])
   deanId       String?
 
   departments  Department[]
 
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @updatedAt @default(now())
 }
 
 model Semester {
@@ -155,11 +154,15 @@ model Semester {
   startDate    DateTime
   endDate      DateTime
 
+  programme    Programme @relation(fields: [programmeId], references: [id])
+  programmeId  String
+
   students     Student[]
   courses      Course[]
+  advisors    AdvisorMapping[]
 
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @updatedAt @default(now())
 }
 
 enum Role {
@@ -174,12 +177,13 @@ model Authentication {
   email    String  @unique
   password String?
   roles    RoleAssignment[]
+  employee Employee? @relation(fields:[employeeId], references: [id], onDelete: Cascade)
+  employeeId String?
 }
 
 model RoleAssignment {
   id     String @id @default(uuid())
-  user   Authentication @relation(fields: [userId], references: [id],  onDelete: Cascade)
+  user   Authentication @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
   role   Role
 }
-
