@@ -59,7 +59,7 @@ model Employee {
 model Programme {
   id           String    @id @default(uuid())
   name         String
-  duration     Int       // Number of years (e.g., 4 for B.Tech)
+  duration     Int       
   department   Department @relation(fields: [departmentId], references: [id])
   departmentId String
   semesters    Semester[]
@@ -150,7 +150,7 @@ model School {
 
 model Semester {
   id           String      @id @default(uuid())
-  name         String
+  name         Int
   startDate    DateTime
   endDate      DateTime
 
