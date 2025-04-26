@@ -178,8 +178,8 @@ model School {
 model Semester {
   semesterNo Int
   name         Int
-  startDate    DateTime
-  endDate      DateTime
+  startDate    DateTime?
+  endDate      DateTime?
 
   programme    Programme @relation(fields: [programmeId], references: [id])
   programmeId  String

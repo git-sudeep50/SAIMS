@@ -1,7 +1,6 @@
 import { Request, Response, RequestHandler } from "express";
 import { prisma } from "../db/postgres/prismaClient";
 
-
 export const createCourse: RequestHandler = async (
   req: Request,
   res: Response
@@ -48,6 +47,7 @@ export const createCourse: RequestHandler = async (
       res.status(400).json({
         message: `Course ${name} of ${department} already exists`,
       });
+      return;
     }
 
     const departmentInfo = await prisma.department.findFirst({
@@ -90,7 +90,10 @@ export const createCourse: RequestHandler = async (
   }
 };
 
-export const getAllCourses: RequestHandler = async (req: Request, res: Response) => {
+export const getAllCourses: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const courses = await prisma.course.findMany({
       include: {
@@ -103,9 +106,12 @@ export const getAllCourses: RequestHandler = async (req: Request, res: Response)
       message: "Some error occurred",
     });
   }
-}
+};
 
-export const getCoursesByDepartment: RequestHandler = async (req: Request, res: Response) => {
+export const getCoursesByDepartment: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
   const { department } = req.params;
   try {
     const courses = await prisma.course.findMany({
@@ -126,64 +132,142 @@ export const getCoursesByDepartment: RequestHandler = async (req: Request, res: 
       message: "Some error occurred",
     });
   }
-}
+};
 
-export const selectCourses: RequestHandler = async (req: Request, res: Response) => {
-  const { rollNo, selectedCourses, semester } = req.body;
-  
-  if(!rollNo || !selectedCourses || !semester){
+export const selectCourses: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const {
+    rollNo,
+    selectedCourses,
+    semester,
+    programmeId,
+  }: {
+    rollNo: string;
+    selectedCourses: string[];
+    semester: number;
+    programmeId: string;
+  } = req.body;
+
+  if (!rollNo || !selectedCourses || !semester) {
     res.status(400).json({ message: "All fields are required" });
     return;
   }
-  try{
+  try {
     const student = await prisma.student.findUnique({
-      where:{
-        enrollmentNumber: rollNo
+      where: {
+        enrollmentNumber: rollNo,
       },
     });
 
-    if(!student){
+    if (!student) {
       res.status(400).json({ message: "Student not found" });
       return;
     }
 
-    const courses = await prisma.course.findMany(
-      {
-        where:{
-          code: {
-            in: selectedCourses
-          }
-        }
-      }
+    const programme = await prisma.programme.findUnique({
+      where: {
+        id: programmeId,
+      },
+    });
+
+    if (!programme) {
+      res.status(400).json({ message: "Programme not found" });
+      return;
+    }
+
+    const courses = await prisma.course.findMany({
+      where: {
+        code: {
+          in: selectedCourses,
+        },
+      },
+    });
+
+    const foundCourses = courses.map((course) => course.code);
+    const notFoundCourses = selectedCourses.filter(
+      (course: any) => !foundCourses.includes(course)
     );
 
-    const foundCourses = courses.map((course)=>course.code);
-    const notFoundCourses = selectedCourses.filter((course:any)=>!foundCourses.includes(course));
-
-    if(notFoundCourses.length > 0){
+    if (notFoundCourses.length > 0) {
       res.status(400).json({ message: `Courses ${notFoundCourses} not found` });
       return;
     }
 
-    const data = selectedCourses.map((code:String)=>(
-      {studentId:rollNo, courseCode:code, semesterId:semester}
-    ));
+    const data = selectedCourses.map((code: string) => ({
+      studentId: rollNo,
+      courseCode: code,
+      semesterId: semester,
+      programmeId: programmeId,
+    }));
 
     const newCourses = await prisma.studentCourses.createMany({
       data,
-      skipDuplicates: true
-    }
-    );
+      skipDuplicates: true,
+    });
 
     res.status(200).json({
       message: "Courses selected successfully",
     });
-
-  }catch(error:any){
-    res.status(500).json({ message: "Some error occurred",error });
+  } catch (error: any) {
+    res.status(500).json({ message: "Some error occurred", error });
   }
-}
+};
 
+export const verifyCourses: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  console.log(req.body);
+  const {
+    rollNo,
+    semester,
+    programmeId,
+    selectedCourses,
+  }: {
+    rollNo: string;
+    semester: number;
+    programmeId: string;
+    selectedCourses: string[];
+  } = req.body;
 
+  if (!rollNo || !semester || !programmeId || !selectedCourses) {
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
 
+  try {
+    const present = await prisma.studentCourses.findMany({
+      where: {
+        studentId: rollNo,
+        semesterId: semester,
+      },
+    });
 
+    console.log(present);
+
+    if (present.length < 1) {
+      res.status(400).json({ message: "Student not found" });
+      return;
+    }
+
+    const result = await prisma.studentCourses.updateMany({
+      where: {
+        studentId: rollNo,
+        programmeId: programmeId,
+        semesterId: semester,
+        courseCode: {
+          in: selectedCourses,
+        },
+      },
+      data: {
+        isVerified: true,
+      },
+    });
+
+    res.status(200).json({ message: "Courses verified successfully",result });
+  } catch (error: any) {
+    res.status(500).json({ message: "Some error occurred", error });
+  }
+};

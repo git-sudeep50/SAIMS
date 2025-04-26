@@ -54,6 +54,23 @@ export const createProgramme = async (req: Request, res: Response) => {
         },
       },
     });
+    let i = 0;
+    const semesters = [];
+    while(i<2*duration){
+      semesters.push(++i);
+    }
+
+    const data = semesters.map((semNo)=>({
+      programmeId: newProgramme.id,
+      semesterNo: semNo,
+      name: semNo,
+    }));
+
+    await prisma.semester.createMany({
+      data,
+      skipDuplicates: true
+    })
+    
 
     res.status(201).json({
       msg: "Programme data entered successfully",
