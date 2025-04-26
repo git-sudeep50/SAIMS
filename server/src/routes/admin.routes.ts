@@ -3,6 +3,7 @@ import { createEmployee, createStudent } from '../controllers/accounts.controlle
 import { addEmployeeData } from '../controllers/employee.controller';
 import { createProgramme } from '../controllers/miscelleneous.controller';
 import { addStudentData } from '../controllers/student.controller';
+import { createCourse } from '../controllers/course.controller';
 
 const router = Router();
 
@@ -10,9 +11,10 @@ const router = Router();
 router.post('/create-student',createStudent);
 router.post('/create-advisor',createEmployee("ADVISOR"));
 router.post('/create-instructor',createEmployee("INSTRUCTOR"));
-router.post("/enter-employee-data",addEmployeeData);
-router.post("/create-programme", createProgramme);
-router.post("/add-student-data",addStudentData);
+router.post('/enter-employee-data',addEmployeeData);
+router.post('/create-programme', createProgramme);
+router.post('/add-student-data',addStudentData);
+router.post('/add-course',createCourse);
 
 
 export default router;

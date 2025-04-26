@@ -25,15 +25,13 @@ model Student {
   // Relation to Programme & Semester
   programme       Programme   @relation(fields: [programmeId], references: [id])
   programmeId     String
-  currentSemester Semester    @relation(fields: [currentSemesterId], references: [id])
-  currentSemesterId String
-
-  // Many-to-Many Courses Enrolled
-  courses         Course[]    @relation(name: "StudentCourses")
-  
+  currentSemester Semester    @relation(fields: [currentSemesterNo, programmeId], references: [semesterNo, programmeId])
+  currentSemesterNo Int
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt @default(now())
+
+  StudentCourses StudentCourses[]
 }
 
 model Employee {
@@ -68,6 +66,8 @@ model Programme {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt @default(now())
+
+  SemesterCourses SemesterCourses[]
 } 
 
 model Course {
@@ -81,18 +81,45 @@ model Course {
   department   Department  @relation(fields: [departmentId], references: [id])
   departmentId String
 
-  // Relation to Semester
-  semester     Semester?   @relation(fields: [semesterId], references: [id])
-  semesterId   String?
+  lecture Int
+  tutorial Int
+  practical Int
 
-  // Many-to-Many with Students
-  students     Student[]   @relation(name: "StudentCourses")
+  courseType String
 
   // Many-to-Many with Instructors
   instructors  InstructorMapping[]
 
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt @default(now())
+
+  SemesterCourses SemesterCourses[]
+
+  StudentCourses StudentCourses[]
+}
+
+model SemesterCourses{
+    id           String    @id @default(uuid())
+    programme Programme @relation(fields:[programmeId], references:[id])
+    programmeId String
+
+    semester Semester @relation(fields:[semesterNo, programmeId], references: [semesterNo, programmeId])
+    semesterNo Int
+
+    course Course @relation(fields:[courseCode], references: [code])
+    courseCode String
+}
+
+model StudentCourses {
+  student    Student  @relation(fields: [studentId], references: [enrollmentNumber])
+  studentId  String
+  semester   Semester @relation(fields: [semesterId, programmeId], references: [semesterNo, programmeId])  // Reference both semesterNo and programmeId
+  semesterId Int
+  programmeId String  // Add programmeId to match the relation
+  course     Course   @relation(fields: [courseCode], references: [code])
+  courseCode String
+  isVerified Boolean @default(false)
+  @@id([studentId, semesterId, courseCode])  // Composite primary key
 }
 
 model InstructorMapping {
@@ -114,8 +141,8 @@ model AdvisorMapping {
   programme     Programme @relation(fields: [programmeId], references: [id])
   programmeId   String
 
-  semester      Semester  @relation(fields: [semesterId], references: [id])
-  semesterId    String
+  semester      Semester  @relation(fields: [semesterNo, programmeId], references: [semesterNo,programmeId])
+  semesterNo    Int
 
   createdAt     DateTime  @default(now())
 }
@@ -149,7 +176,7 @@ model School {
 }
 
 model Semester {
-  id           String      @id @default(uuid())
+  semesterNo Int
   name         Int
   startDate    DateTime
   endDate      DateTime
@@ -158,11 +185,16 @@ model Semester {
   programmeId  String
 
   students     Student[]
-  courses      Course[]
   advisors    AdvisorMapping[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt @default(now())
+
+  SemesterCourses SemesterCourses[]
+
+  StudentCourses StudentCourses[]
+
+  @@id([semesterNo, programmeId])
 }
 
 enum Role {

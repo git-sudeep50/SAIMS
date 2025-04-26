@@ -7,7 +7,8 @@
     "test": "jest",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "npx tsc && npx nodemon dist/index.js"
+    
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
   "prisma": {
     "schema": "src/db/postgres/prisma/schema.prisma"
@@ -36,6 +37,7 @@
     "nodemon": "^3.1.9",
     "prisma": "^6.3.1",
     "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
     "tsc-watch": "^6.2.1",
     "typescript": "^5.7.3"
   },

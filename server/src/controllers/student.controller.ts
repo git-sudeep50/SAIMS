@@ -28,10 +28,10 @@ export const addStudentData = async (req: Request, res: Response) => {
       deptName: string;
       semester: number;
     } = req.body;
+
+    // Check if student already exists
     const existingStudent = await prisma.student.findUnique({
-      where: {
-        enrollmentNumber: rollNumber,
-      },
+      where: { enrollmentNumber: rollNumber },
     });
 
     if (existingStudent) {
@@ -41,52 +41,68 @@ export const addStudentData = async (req: Request, res: Response) => {
       return;
     }
 
-    const deptInfo = await prisma.department.findFirst({
-        where: {
-          name: deptName,
-        },
-      });
-  
-      if (!deptInfo) {
-        res.status(404).json({ message: `Department ${deptName} not found` });
-        return;
-      }
-
+    // Fetch department, programme, and semester in a single query
     const programmeInfo = await prisma.programme.findFirst({
       where: {
         name: programme,
-        department: { id: deptInfo.id },
+        department: { name: deptName },
+      },
+      include: {
+        department: true, // Fetch related department info
+        semesters: {
+          where: { name: semester },
+          select: { semesterNo: true },
+        },
       },
     });
 
+    console.log(programmeInfo);
+
     if (!programmeInfo) {
-      res.status(404).json({ message: `Programme ${programme} not found` });
+      res
+        .status(404)
+        .json({
+          message: `Programme '${programme}' not found under department '${deptName}'`,
+        });
       return;
     }
 
-    const semesterInfo = await prisma.semester.findFirst({
-      where: {
-        name: semester,
-        programmeId: programmeInfo.id,
-      },
-    });
+    // Get department ID
+    const departmentId = programmeInfo.department.id;
 
+    // Get semester ID (validate if semester exists)
+    const semesterInfo = programmeInfo.semesters[0];
+    if (!semesterInfo) {
+      res
+        .status(404)
+        .json({
+          message: `Semester '${semester}' not found in programme '${programme}'`,
+        });
+      return;
+    }
+
+    // Create student entry
     const dobDate = new Date(dob);
-
-
     const newStudent = await prisma.student.create({
       data: {
-        name: name,
-        email: email,
-        phoneNumber: phoneNumber,
+        name,
+        email,
+        phoneNumber,
         dob: dobDate,
-        address: address,
-        gender: gender,
+        address,
+        gender,
         enrollmentNumber: rollNumber,
-        enrollmentYear: enrollmentYear,
-        programme: { connect: { id: programmeInfo?.id } },
-        department: { connect: { id: deptInfo?.id } },
-        currentSemester: { connect: { id: semesterInfo?.id } },
+        enrollmentYear,
+        programme: { connect: { id: programmeInfo.id } },
+        department: { connect: { id: departmentId } },
+        currentSemester: {
+          connect: {
+            semesterNo_programmeId: {
+              semesterNo: semester,
+              programmeId: programmeInfo.id,
+            },
+          },
+        },
       },
     });
 
@@ -95,8 +111,11 @@ export const addStudentData = async (req: Request, res: Response) => {
       data: newStudent,
     });
   } catch (err: any) {
-        res.status(500).json({
-            msg: err.message,
-        })
+    console.error("Error adding student:", err);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
 };
+

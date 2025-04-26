@@ -12,11 +12,12 @@ interface AuthenticatedRequest extends Request {
 /**
  * Middleware to verify JWT from HTTPOnly cookies
  */
-export const verifyToken = (req:AuthenticatedRequest, res:Response, next:NextFunction) => {
+export const verifyToken = (req:AuthenticatedRequest, res:Response, next:NextFunction):void => {
     const token: string | undefined = req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({ message: "Access Denied: No Token Provided" });
+    res.status(401).json({ message: "Access Denied: No Token Provided" });
+    return;
   }
 
   jwt.verify(token, process.env.JWT_SECRET as string, (err, decoded) => {

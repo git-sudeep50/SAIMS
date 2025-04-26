@@ -5,10 +5,12 @@ import advisorRouter from './routes/courseAdvisor.routes';
 import instructorRouter from './routes/courseInstructor.routes';
 import { authorizeRoles } from './middlewares/access.middlewares';
 import studentRouter from './routes/student.routes';
+import commonRouter from './routes/common.routes';
 import { createClient } from "redis";
 import * as dotenv from 'dotenv';
 dotenv.config();
 import cookieParser from "cookie-parser";
+import { verifyToken } from './middlewares/auth.middlewares';
 
 const app = express();
 app.use(express.json());
@@ -18,7 +20,7 @@ app.use(cookieParser());
 export const redisClient = createClient();
 
 redisClient.on('error', (err) => {
-    console.error('Redis Client Error', err);
+    // console.error('Redis Client Error', err);
 });
 
 redisClient.connect().then(() => {
@@ -37,6 +39,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', authorizeRoles("ADMIN"), adminRouter);
 app.use('/api/student', studentRouter);
 app.use('/api/advisor', advisorRouter);
+app.use('/api/common',verifyToken, commonRouter);
 
 // Use a Default Port in Case of Missing Env
 const PORT = process.env.SERVER_PORT || 3000;
