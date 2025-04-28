@@ -1,0 +1,23 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root{
+  --bg-clr:#101214;
+  --text-color: #707477;
+  --border-color: #282F35;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-clr);
+}
+
+.app{
+  display: flex;
+  flex-direction: row;
+}
+

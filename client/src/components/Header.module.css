@@ -1,0 +1,8 @@
+.main-container{
+    background-color: var(--bg-clr);
+    height: 10vh;
+    width: 100%;
+    border-bottom: 3px solid var(--border-color);
+    padding: 1em;
+    padding-right: 3em;
+}
