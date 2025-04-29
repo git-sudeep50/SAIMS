@@ -1,0 +1,65 @@
+.main-container {
+  padding: 0.5em;
+}
+
+.credits-card-div {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0.5em;
+  padding-top: 1em;
+}
+
+.courses-div {
+  padding: 0.5em;
+}
+
+.credits-card {
+  display: flex;
+  flex-direction: column;
+  /* border: 2px solid var(--signature-color); */
+  width: 18em;
+  height: 12em;
+  padding: 0.5em;
+  cursor: pointer;
+  background: linear-gradient(to bottom, #f0f3f616, #7eb852);
+  border-radius: 0.5em;
+  /* box-shadow: 0px 10px 8px rgba(2, 0, 0, 0.25); */
+  box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+}
+
+/* .currrently-enrolled{
+    border: 2px solid var(--border-color);
+    padding
+} */
+
+.courses-inside {
+  border: 2px solid var(--border-color);
+  padding: 0.5em;
+}
+
+.course {
+  overflow-y: auto;
+}
+
+.subject {
+  margin-top: 0.5em;
+  padding: 0.5em;
+}
+
+.course::-webkit-scrollbar {
+  width: 8px;
+}
+
+.course::-webkit-scrollbar-track {
+  background: var(--bg-clr);
+  border-radius: 4px;
+}
+
+.course::-webkit-scrollbar-thumb {
+    background-color: var(--signature-color);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+

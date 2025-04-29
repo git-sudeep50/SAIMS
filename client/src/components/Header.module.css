@@ -1,5 +1,5 @@
 .main-container{
-    background-color: var(--bg-clr);
+    /* background-color: var(--bg-clr); */
     height: 10vh;
     width: 100%;
     border-bottom: 3px solid var(--border-color);

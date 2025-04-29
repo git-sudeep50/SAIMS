@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { createEmployee, createStudent } from '../controllers/accounts.controller';
 import { addEmployeeData } from '../controllers/employee.controller';
 import { createProgramme } from '../controllers/miscelleneous.controller';
-import { addStudentData } from '../controllers/student.controller';
+import { addStudentData, getStudentDataByRollNumber } from '../controllers/student.controller';
 import { createCourse } from '../controllers/course.controller';
+import { assignCourseToInstructor } from '../controllers/courseInstructor.controller';
 
 const router = Router();
 
@@ -15,6 +16,8 @@ router.post('/enter-employee-data',addEmployeeData);
 router.post('/create-programme', createProgramme);
 router.post('/add-student-data',addStudentData);
 router.post('/add-course',createCourse);
+router.post('/assign-course',assignCourseToInstructor);
+router.get('/get-student-data/:rollNo',getStudentDataByRollNumber);
 
 
 export default router;

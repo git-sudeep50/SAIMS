@@ -59,11 +59,9 @@ export const addStudentData = async (req: Request, res: Response) => {
     console.log(programmeInfo);
 
     if (!programmeInfo) {
-      res
-        .status(404)
-        .json({
-          message: `Programme '${programme}' not found under department '${deptName}'`,
-        });
+      res.status(404).json({
+        message: `Programme '${programme}' not found under department '${deptName}'`,
+      });
       return;
     }
 
@@ -73,11 +71,9 @@ export const addStudentData = async (req: Request, res: Response) => {
     // Get semester ID (validate if semester exists)
     const semesterInfo = programmeInfo.semesters[0];
     if (!semesterInfo) {
-      res
-        .status(404)
-        .json({
-          message: `Semester '${semester}' not found in programme '${programme}'`,
-        });
+      res.status(404).json({
+        message: `Semester '${semester}' not found in programme '${programme}'`,
+      });
       return;
     }
 
@@ -119,3 +115,34 @@ export const addStudentData = async (req: Request, res: Response) => {
   }
 };
 
+export const getStudentDataByRollNumber = async (
+  req: Request,
+  res: Response
+) => {
+  console.log("Admin Routes");
+  const { rollNo } = req.params;
+  if (!rollNo) {
+    res.status(400).json({ message: "Roll number is required" });
+    return;
+  }
+  try {
+    const student = await prisma.student.findUnique({
+      where: { enrollmentNumber: rollNo },
+      include: {
+        programme: {
+          include: {
+            department: true,
+          },
+        },
+        currentSemester: true,
+      },
+    });
+    res.status(200).json(student);
+  } catch (error: any) {
+    console.log(error); // Important to log full error
+    res.status(500).json({
+      message: "Some error occurred",
+      error,
+    });
+  }
+};

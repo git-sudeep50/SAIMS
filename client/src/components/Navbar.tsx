@@ -2,9 +2,11 @@ import React,{ useState } from "react";
 import styles from "./Navbar.module.css";
 import image from "../assets/react.svg";
 import { Link } from "react-router";
+import { useSelector } from "react-redux";
 
 const Navbar: React.FC = () => {
   const [activeButton, setActiveButton] = useState("");
+  const theme = useSelector((state: any) => state.theme.theme);
   const links:{
     id: string;
     label: string;
@@ -83,12 +85,12 @@ const Navbar: React.FC = () => {
     },
   ];
   return (
-    <div className={styles["main-container"]}>
+    <div className={`${styles["main-container"]} ${theme === "light" ? "bg-white" : "bg-[--bg-clr]"}`}>
       <div className={`${styles.profile} flex items-center gap-4`}>
         <div className={`${styles.image} rounded-2xl bg-amber-50`}>
           <img className="size-8" src={image} alt="profile-image" />
         </div>
-        <h3 className="text-white">Subhranandan Deka</h3>
+        <h3 className={`${theme === "light" ? "text-black" : "text-white"}`}>Subhranandan Deka</h3>
       </div>
       <div className={`${styles["nav-links"]} bg-[var(white)]`}>
         <h3 className="text-[var(--text-color)] font-semibold">DASHBOARDS</h3>
