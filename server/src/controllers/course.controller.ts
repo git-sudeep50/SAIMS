@@ -5,8 +5,19 @@ export const createCourse: RequestHandler = async (
   req: Request,
   res: Response
 ) => {
-  const { name, code, credits, description, department, L, T, P, courseType } =
-    req.body;
+  const {
+    name,
+    code,
+    credits,
+    description,
+    department,
+    L,
+    T,
+    P,
+    courseType,
+    programmeId,
+    semester,
+  } = req.body;
   console.log(req.body);
 
   const requiredFields = [
@@ -19,6 +30,8 @@ export const createCourse: RequestHandler = async (
     T,
     P,
     courseType,
+    programmeId,
+    semester,
   ];
   const missing = requiredFields.some((field) => field === undefined);
 
@@ -79,9 +92,33 @@ export const createCourse: RequestHandler = async (
         courseType: courseType,
       },
     });
+
+    const newSemesterCourse = await prisma.semesterCourses.create({
+      data: {
+        course: {
+          connect: {
+            code: newCourse.code,
+          },
+        },
+        programme: {
+          connect: {
+            id: programmeId,
+          },
+        },
+        semester: {
+          connect: {
+            semesterNo_programmeId: {
+              programmeId: programmeId,
+              semesterNo: Number(semester),
+            },
+          },
+        },
+      },
+    });
     res.status(201).json({
       message: "Course created successfully",
       course: newCourse,
+      newSemesterCourse: newSemesterCourse,
     });
   } catch (error) {
     res.status(500).json({
@@ -130,6 +167,32 @@ export const getCoursesByDepartment: RequestHandler = async (
   } catch (error) {
     res.status(500).json({
       message: "Some error occurred",
+    });
+  }
+};
+
+export const getCoursesByProgramme: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const { programmeId } = req.body;
+  try {
+    const courses = await prisma.semesterCourses.findMany({
+      where: {
+        programmeId: programmeId,
+      },
+      include: {
+        course: true,
+      },
+    });
+
+    res.status(200).json({
+      message: "Success",
+      courses: courses,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: "Failed to get courses",
     });
   }
 };
@@ -215,6 +278,8 @@ export const selectCourses: RequestHandler = async (
   }
 };
 
+
+
 export const verifyCourses: RequestHandler = async (
   req: Request,
   res: Response
@@ -266,8 +331,44 @@ export const verifyCourses: RequestHandler = async (
       },
     });
 
-    res.status(200).json({ message: "Courses verified successfully",result });
+    res.status(200).json({ message: "Courses verified successfully", result });
   } catch (error: any) {
     res.status(500).json({ message: "Some error occurred", error });
+  }
+};
+
+export const getCoursesByStudent: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const email  = req.query.email as string;
+  const rollNo = email.split('@')[0].toUpperCase();
+  try {
+    const courses = await prisma.studentCourses.findMany({
+      where: {
+        studentId: rollNo,
+      },
+      select: {
+        grade: true,
+        status: true,
+        course: {
+          select:{
+            code: true,
+            name: true,
+            credits: true,
+            description: true,
+            lecture: true,
+            tutorial: true,
+            practical: true,
+            courseType: true,
+
+          }
+        },
+      },
+    });
+
+    res.status(200).json({ message: "Success", courses });
+  } catch (error: any) {
+    res.status(500).json({ message: "Failed to get courses", error });
   }
 };

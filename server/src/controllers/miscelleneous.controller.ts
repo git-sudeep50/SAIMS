@@ -84,11 +84,91 @@ export const createProgramme = async (req: Request, res: Response) => {
   }
 };
 
-export const createDepartment = async (req:Request, res: Response) =>{
+// export const createDepartment = async (req:Request, res: Response) =>{
+//   try{
+//     const { } = req.body;
+
+//   }catch(err:any){
+
+//   }
+// }
+
+export const getStudentOverview = async (req: Request, res: Response) => {
+  const  email  = req.query.email as string;
+
   try{
-    const { } = req.body;
+    const studentData = await prisma.student.findUnique({
+      where:{
+        email: email
+      },
+      include:{
+        currentSemester: {
+          select:{
+            semesterNo: true
+          }
+        },
+        department: {
+          select:{
+            name: true
+          }
+        }
+      }
+    })
 
-  }catch(err:any){
+    if(!studentData){
+      res.status(404).json({
+        message: "Student not found"
+      })
+      return;
+    }
 
+    const programmeData = await prisma.programme.findUnique({
+      where:{
+        id: studentData.programmeId
+      }
+    })
+
+    const coursesCompleted = await prisma.studentCourses.count({
+      where:{
+        studentId: studentData.enrollmentNumber,
+        status: "completed"
+      }
+    })
+
+    const completedCourses = await prisma.studentCourses.findMany({
+      where: {
+        studentId: studentData.enrollmentNumber,
+        status: "completed",
+      },
+      include: {
+        course: {
+          select: {
+            credits: true,
+          },
+        },
+      },
+    });
+
+    const totalCreditsCompleted = completedCourses.reduce((sum, sc) => {
+      return sum + (sc.course?.credits || 0);
+    }, 0);
+
+    if(!programmeData){
+      res.status(404).json({
+        message: "Programme not found"
+      })
+      return;
+    }
+
+    res.status(200).json({
+      studentData,
+      programmeData,
+      coursesCompleted,
+      totalCreditsCompleted
+    })
+  }catch(error:any){
+      res.status(500).json({
+        message: "Some error occurred"
+      })
   }
-}
+};

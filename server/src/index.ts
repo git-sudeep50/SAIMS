@@ -8,11 +8,18 @@ import studentRouter from './routes/student.routes';
 import commonRouter from './routes/common.routes';
 import { createClient } from "redis";
 import * as dotenv from 'dotenv';
+import cors from 'cors';
 dotenv.config();
 import cookieParser from "cookie-parser";
 import { verifyToken } from './middlewares/auth.middlewares';
 
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    credentials: true
+}
+
 const app = express();
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -39,7 +46,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', authorizeRoles("ADMIN"), adminRouter);
 app.use('/api/student', studentRouter);
 app.use('/api/advisor', advisorRouter);
-app.use('/api/common',verifyToken, commonRouter);
+app.use('/api/common', commonRouter);
 
 // Use a Default Port in Case of Missing Env
 const PORT = process.env.SERVER_PORT || 3000;

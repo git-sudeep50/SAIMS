@@ -21,6 +21,7 @@ model Student {
   // Relation to Department
   department       Department @relation(fields: [departmentId], references: [id])
   departmentId     String
+  cgpa Float?
 
   // Relation to Programme & Semester
   programme       Programme   @relation(fields: [programmeId], references: [id])
@@ -32,6 +33,8 @@ model Student {
   updatedAt       DateTime @updatedAt @default(now())
 
   StudentCourses StudentCourses[]
+
+  StudentSemester StudentSemester[]
 }
 
 model Employee {
@@ -60,6 +63,8 @@ model Programme {
   duration     Int       
   department   Department @relation(fields: [departmentId], references: [id])
   departmentId String
+  maximumCredits Int?
+  minimumCredits Int?
   semesters    Semester[]
   students Student[]
   advisors AdvisorMapping[]
@@ -110,6 +115,19 @@ model SemesterCourses{
     courseCode String
 }
 
+model StudentSemester{
+  student Student @relation(fields: [rollNo], references:[enrollmentNumber])
+  rollNo String
+
+  semester Semester @relation(fields: [semesterNo, programmeId], references: [semesterNo, programmeId])
+  semesterNo Int
+  programmeId String
+
+  sgpa Float?
+
+  @@id([rollNo, semesterNo])
+}
+
 model StudentCourses {
   student    Student  @relation(fields: [studentId], references: [enrollmentNumber])
   studentId  String
@@ -119,6 +137,9 @@ model StudentCourses {
   course     Course   @relation(fields: [courseCode], references: [code])
   courseCode String
   isVerified Boolean @default(false)
+  status String?
+  grade Int?
+  marks Float?
   @@id([studentId, semesterId, courseCode])  // Composite primary key
 }
 
@@ -195,6 +216,7 @@ model Semester {
   StudentCourses StudentCourses[]
 
   @@id([semesterNo, programmeId])
+  StudentSemester StudentSemester[]
 }
 
 enum Role {
