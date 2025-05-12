@@ -140,6 +140,8 @@ model StudentCourses {
   status String?
   grade Int?
   marks Float?
+  classesTaken Int? @default(0)
+  classesAttended Int? @default(0)
   @@id([studentId, semesterId, courseCode])  // Composite primary key
 }
 

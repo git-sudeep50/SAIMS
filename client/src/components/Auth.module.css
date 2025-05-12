@@ -1,0 +1,27 @@
+.container{
+    transition: transform 0.3s ease-in;
+}
+
+.container:hover{
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+    transform: translateY(-10px);
+}
+
+.auth-container{
+    padding: 5em;
+}
+
+.input-box{
+    padding: 0.5em 1em 0.5em 1em;
+}
+
+.submit-button{
+    cursor: pointer;
+    margin-top: 1em;
+    padding: 0.5em 1em 0.5em 1em;
+    background-color: black;
+    color: white;
+    border-radius: 0.5em;
+}
+

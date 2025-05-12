@@ -8,18 +8,22 @@ import jwt from "jsonwebtoken";
 
 export const checkUserAccount = async (req: Request, res: Response) => {
   const { email } = req.body;
+  console.log("Inside");
 
   try {
+    console.log("Inside");
     const result = await prisma.authentication.findUnique({
       where: {
         email: email,
       },
     });
-
+    
     if (!result) {
       res.status(404).json({
+        status: 404,
         msg: "No Advisor access found on this email",
       });
+      return;
     }
     const OTP = otpGenerator.generate(6, {
       digits: true,
@@ -32,10 +36,12 @@ export const checkUserAccount = async (req: Request, res: Response) => {
     await sendMailOTP(email, OTP);
 
     res.status(200).json({
+      status: 200,
       msg: "OTP sent successfully to your email",
     });
   } catch (error: any) {
     res.status(500).json({
+      status: 500,
       msg: "Some error occurred",
       error: error.message,
     });
@@ -62,13 +68,21 @@ export const registerUser = async (req: Request, res: Response) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    await prisma.authentication.update({
+    const result = await prisma.authentication.update({
       where: { email: email },
       data: { password: hashedPassword },
+      include: { roles: true },
     });
 
-    redisClient.del(`otp:${email}`);
-    res.status(201).json({ msg: "User registered successfully" });
+    if (result) {
+      const data = {
+        id: result.id,
+        email: result.email,
+        roles: result.roles.map((role) => role.role),
+      };
+      redisClient.del(`otp:${email}`);
+      res.status(201).json({ msg: "User registered successfully", data: data });
+    }
   } catch (error: any) {
     res.status(500).json({
       msg: "Some error occurred",
@@ -96,9 +110,9 @@ export const loginUser: RequestHandler = async (
       select: {
         id: true,
         email: true,
-        password: true, 
+        password: true,
         roles: true,
-      }
+      },
     });
     if (!result) {
       res.status(404).json({ msg: "No student account found on this email" });
@@ -118,7 +132,11 @@ export const loginUser: RequestHandler = async (
     }
 
     const token = jwt.sign(
-      { id: result.id, email: result.email,roles: result.roles.map(r => r.role ) },
+      {
+        id: result.id,
+        email: result.email,
+        roles: result.roles.map((r) => r.role),
+      },
       process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
     );
@@ -132,17 +150,20 @@ export const loginUser: RequestHandler = async (
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ message: "Login successful",data: result });
+    res.json({ message: "Login successful", data: result });
   } catch (err: any) {
     res.status(500).json({ msg: "Some error occurred", error: err.message });
     return;
   }
 };
 
-export const logoutUser: RequestHandler = async (req: Request, res: Response) => {
+export const logoutUser: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
   res.clearCookie("token", {
-    httpOnly: true, 
-    secure: process.env.NODE_ENV === "production", 
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
   });
   res.json({ message: "Logged out successfully" });

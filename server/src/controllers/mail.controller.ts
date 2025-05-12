@@ -12,8 +12,8 @@ export const sendMailOTP = async (email: string, OTP:string) => {
   const mailOptions = {
     from: "mail.sudeep2024@gmail.com",
     to: email,
-    subject: `One Time Password for Admin`,
-    text: `You are assigned as Admin for the Student Academic System and your OTP is ${OTP}`,
+    subject: `One Time Password from SAIMS`,
+    text: `You OTP for Student Academic System is ${OTP}, Do not share this OTP with anyone.`,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {

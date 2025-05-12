@@ -2,6 +2,7 @@ import { Router } from "express";
 import { addEmployeeData } from "../controllers/employee.controller";
 import { getAllCourses, getCoursesByDepartment, getCoursesByProgramme, getCoursesByStudent, selectCourses } from "../controllers/course.controller";
 import { getStudentOverview } from "../controllers/miscelleneous.controller";
+import { authorizeRoles } from "../middlewares/access.middlewares";
 
 const router = Router();
 

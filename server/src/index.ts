@@ -27,7 +27,7 @@ app.use(cookieParser());
 export const redisClient = createClient();
 
 redisClient.on('error', (err) => {
-    // console.error('Redis Client Error', err);
+    console.error('Redis Client Error', err);
 });
 
 redisClient.connect().then(() => {
@@ -47,8 +47,9 @@ app.use('/api/admin', authorizeRoles("ADMIN"), adminRouter);
 app.use('/api/student', studentRouter);
 app.use('/api/advisor', advisorRouter);
 app.use('/api/common', commonRouter);
+app.use('/api/instructor', instructorRouter);
 
-// Use a Default Port in Case of Missing Env
+
 const PORT = process.env.SERVER_PORT || 3000;
 
 app.listen(PORT, () => {

@@ -127,6 +127,57 @@ export const createCourse: RequestHandler = async (
   }
 };
 
+export const addSemesterCourses:RequestHandler = async(req:Request, res:Response) =>{
+  const { semester, programmeId, selectedCourses } = req.body;
+  console.log(req.body);
+
+  if(!semester || !programmeId || selectedCourses.length === 0){
+    console.log("All fields are required");
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+
+  try{
+    const courses = await prisma.course.count({
+      where:{
+        code: {
+          in: selectedCourses
+        }
+      }
+    });
+
+    if(courses !== selectedCourses.length){
+      res.status(400).json({ message: "One or more selected courses do not exist" });
+      return;
+    }
+    const existingCourse = await prisma.semesterCourses.count({
+      where:{
+        programmeId: programmeId,
+        courseCode:{
+          in: selectedCourses
+        }
+      }
+    });
+
+    if(existingCourse > 0){
+      res.status(400).json({ message: "Course already exists" });
+      return;
+    }
+
+    const newSemesterCourses = await prisma.semesterCourses.createMany({
+      data: selectedCourses.map((courseCode: string) => ({
+        courseCode: courseCode,
+        programmeId: programmeId,
+        semesterNo: Number(semester),
+      })),
+    });
+    res.status(201).json({ message: "Course added successfully", newSemesterCourses });
+
+  }catch(error: any){
+    res.status(500).json({ message: "Some error occurred", error });
+  }
+}
+
 export const getAllCourses: RequestHandler = async (
   req: Request,
   res: Response
@@ -372,3 +423,92 @@ export const getCoursesByStudent: RequestHandler = async (
     res.status(500).json({ message: "Failed to get courses", error });
   }
 };
+
+export const gradeStudent: RequestHandler = async ( req: Request, res: Response) => {
+  const { rollNo, courseCode, grade, marks } = req.body;
+  if( !rollNo || !courseCode || !grade || !marks){
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+  try{
+    const result = await prisma.studentCourses.updateMany({
+      where: {
+        studentId: rollNo,
+        courseCode: courseCode,
+      },
+      data: {
+        grade: grade,
+        marks: marks,
+        status: grade > 0 ? "completed" : "failed",
+      },
+    });
+
+    res.status(200).json({ message: "Graded successfully", result });
+  }catch (error: any) {
+    res.status(500).json({ message: "Some error occurred", error });
+  }
+}
+
+export const markStudentAttendance:RequestHandler = async ( req: Request, res: Response) => {
+  const { rollNo, courseCode, semester, classesAttended} = req.body;
+  let classesTaken = req.body.classesTaken;
+  if( !rollNo || !courseCode || !semester || !classesAttended){
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+
+  try{
+    const currentAttendance = await prisma.studentCourses.findUnique({
+      where:{
+        studentId_semesterId_courseCode:{
+          studentId: rollNo,
+          courseCode: courseCode,
+          semesterId: semester
+        }
+      },
+      select:{
+        classesAttended: true,
+        classesTaken: true,
+        studentId: true,
+        courseCode: true,
+      }
+    });
+
+    if(!currentAttendance){
+      res.status(404).json({ message: "Course not found" });
+      return;
+    }
+
+    if(currentAttendance.classesTaken === null && !classesTaken){
+      res.status(400).json({ message: "Classes taken is required" });
+      return;
+    }else if(currentAttendance.classesTaken){
+      classesTaken = currentAttendance.classesTaken + 1;
+    }
+    
+
+    const newAttendance = await prisma.studentCourses.update({
+      where:{
+        studentId_semesterId_courseCode:{
+          studentId: rollNo,
+          courseCode: courseCode,
+          semesterId: semester
+        },
+      },
+      data:{
+        classesAttended: classesAttended,
+        classesTaken: classesTaken
+      }
+    })
+
+    res.status(200).json({ message: "Attendance marked successfully", newAttendance });
+
+    
+  }catch (error: any) {
+    res.status(500).json({ message: "Some error occurred", error });
+  }
+}
+
+
+
+
