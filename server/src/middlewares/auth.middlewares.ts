@@ -14,6 +14,7 @@ interface AuthenticatedRequest extends Request {
  */
 export const verifyToken = (req:AuthenticatedRequest, res:Response, next:NextFunction):void => {
     const token: string | undefined = req.cookies.token;
+    console.log("TOKEN",token);
 
   if (!token) {
     res.status(401).json({ message: "Access Denied: No Token Provided" });
@@ -24,7 +25,7 @@ export const verifyToken = (req:AuthenticatedRequest, res:Response, next:NextFun
     if (err) {
       return res.status(403).json({ message: "Invalid or Expired Token" });
     }
-
+    console.log("VERIFIED",decoded);
     req.user = decoded as JwtPayload; ; 
     next();
   });

@@ -1,0 +1,30 @@
+.container{
+    padding: 2em;
+}
+
+.header{
+    /* border: 2px solid rgb(122, 117, 117); */
+    border-radius: 5px;
+    padding: 0.5em;
+}
+
+.info{
+    padding: 0.5em;
+    border: 2px solid rgb(122, 117, 117);
+    border-radius: 5px;
+    padding: 0.5em;
+    height: 64vh;
+}
+
+.academic-info{
+    padding:1em
+}
+
+.other-info{
+    padding:1em
+}
+
+.photo{
+    border: 2px solid var(--signature-color);
+    background-color: gray;
+}

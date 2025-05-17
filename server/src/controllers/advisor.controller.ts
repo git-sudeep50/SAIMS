@@ -1,7 +1,7 @@
 import { Request, Response, RequestHandler } from "express";
 import { prisma } from "../db/postgres/prismaClient";
 
-export const assignAdvisors:RequestHandler = async (req: Request, res: Response) => {
+export const assignAdvisor:RequestHandler = async (req: Request, res: Response) => {
     const { employeeId, programmeId, semesterNo} = req.body;
 
     if(!employeeId || !programmeId || !semesterNo){
@@ -40,7 +40,44 @@ export const assignAdvisors:RequestHandler = async (req: Request, res: Response)
                 }
             }
         })
+
+        res.status(200).json({ message: "Advisor assigned successfully" });
     }catch(error:any){
         res.status(500).json({ message: "Some error occurred",error });
     }
 }
+
+export const getAdvisorsByDepartment: RequestHandler = async (req: Request, res: Response) => {
+  const { departmentId } = req.params;
+
+  if (!departmentId) {
+    res.status(400).json({ error: 'departmentId is required in URL params' });
+    return;
+  }
+
+  try {
+    const instructors = await prisma.$queryRaw<
+      Array<{
+        id: string;
+        name: string;
+        email: string;
+        phone: string | null;
+        departmentId: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>
+    >`
+      SELECT e.*
+      FROM "Employee" e
+      JOIN "Authentication" a ON a."employeeId" = e.id
+      JOIN "RoleAssignment" r ON r."userId" = a.id
+      WHERE r.role = 'ADVISOR'
+        AND e."departmentId" = ${departmentId};
+    `;
+
+    res.status(200).json({ instructors });
+  } catch (error) {
+    console.error('Error fetching instructors:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

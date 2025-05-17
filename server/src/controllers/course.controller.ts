@@ -127,39 +127,44 @@ export const createCourse: RequestHandler = async (
   }
 };
 
-export const addSemesterCourses:RequestHandler = async(req:Request, res:Response) =>{
+export const addSemesterCourses: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
   const { semester, programmeId, selectedCourses } = req.body;
   console.log(req.body);
 
-  if(!semester || !programmeId || selectedCourses.length === 0){
+  if (!semester || !programmeId || selectedCourses.length === 0) {
     console.log("All fields are required");
     res.status(400).json({ message: "All fields are required" });
     return;
   }
 
-  try{
+  try {
     const courses = await prisma.course.count({
-      where:{
+      where: {
         code: {
-          in: selectedCourses
-        }
-      }
+          in: selectedCourses,
+        },
+      },
     });
 
-    if(courses !== selectedCourses.length){
-      res.status(400).json({ message: "One or more selected courses do not exist" });
+    if (courses !== selectedCourses.length) {
+      res
+        .status(400)
+        .json({ message: "One or more selected courses do not exist" });
       return;
     }
     const existingCourse = await prisma.semesterCourses.count({
-      where:{
+      where: {
         programmeId: programmeId,
-        courseCode:{
-          in: selectedCourses
-        }
-      }
+        courseCode: {
+          in: selectedCourses,
+        },
+      },
     });
 
-    if(existingCourse > 0){
+    if (existingCourse > 0) {
       res.status(400).json({ message: "Course already exists" });
       return;
     }
@@ -171,12 +176,13 @@ export const addSemesterCourses:RequestHandler = async(req:Request, res:Response
         semesterNo: Number(semester),
       })),
     });
-    res.status(201).json({ message: "Course added successfully", newSemesterCourses });
-
-  }catch(error: any){
+    res
+      .status(201)
+      .json({ message: "Course added successfully", newSemesterCourses });
+  } catch (error: any) {
     res.status(500).json({ message: "Some error occurred", error });
   }
-}
+};
 
 export const getAllCourses: RequestHandler = async (
   req: Request,
@@ -248,6 +254,39 @@ export const getCoursesByProgramme: RequestHandler = async (
   }
 };
 
+export const getCoursesBySemester: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const { semester, programmeId } = req.body;
+  if (!semester || !programmeId) {
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+  try {
+    const courses = await prisma.semesterCourses.findMany({
+      where: {
+        semesterNo: Number(semester),
+        programmeId: programmeId,
+      },
+      include: {
+        course: true,
+      },
+    });
+    const result = courses.map(
+      ({ id, programmeId, semesterNo, courseCode, ...rest }) => rest.course
+    );
+    res.status(200).json({
+      message: "Success",
+      courses: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: "Failed to get courses",
+    });
+  }
+};
+
 export const selectCourses: RequestHandler = async (
   req: Request,
   res: Response
@@ -264,7 +303,12 @@ export const selectCourses: RequestHandler = async (
     programmeId: string;
   } = req.body;
 
-  if (!rollNo || !selectedCourses || !semester) {
+  if (
+    !rollNo ||
+    !selectedCourses ||
+    !semester ||
+    selectedCourses.length === 0
+  ) {
     res.status(400).json({ message: "All fields are required" });
     return;
   }
@@ -314,12 +358,47 @@ export const selectCourses: RequestHandler = async (
       courseCode: code,
       semesterId: semester,
       programmeId: programmeId,
+      status: "ongoing",
     }));
 
     const newCourses = await prisma.studentCourses.createMany({
       data,
       skipDuplicates: true,
     });
+
+    if (newCourses) {
+      const existing = await prisma.studentSemester.findUnique({
+        where: {
+          rollNo_semesterNo: {
+            rollNo: rollNo,
+            semesterNo: semester,
+          },
+        },
+      });
+
+      if (existing) {
+        await prisma.studentSemester.update({
+          where: {
+            rollNo_semesterNo: {
+              rollNo: rollNo,
+              semesterNo: semester,
+            },
+          },
+          data: {
+            hasRegisteredCourses: true,
+          },
+        });
+      } else {
+        await prisma.studentSemester.create({
+          data: {
+            rollNo: rollNo,
+            semesterNo: semester,
+            hasRegisteredCourses: true,
+            programmeId: programmeId,
+          },
+        });
+      }
+    }
 
     res.status(200).json({
       message: "Courses selected successfully",
@@ -328,8 +407,6 @@ export const selectCourses: RequestHandler = async (
     res.status(500).json({ message: "Some error occurred", error });
   }
 };
-
-
 
 export const verifyCourses: RequestHandler = async (
   req: Request,
@@ -382,18 +459,190 @@ export const verifyCourses: RequestHandler = async (
       },
     });
 
+    const verified = await prisma.studentSemester.update({
+      where: {
+        rollNo_semesterNo: {
+          rollNo: rollNo,
+          semesterNo: semester,
+        },
+      },
+      data: {
+        areCoursesVerified: true,
+      },
+    });
+
     res.status(200).json({ message: "Courses verified successfully", result });
   } catch (error: any) {
     res.status(500).json({ message: "Some error occurred", error });
   }
 };
 
+export const changeCourses: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const { rollNo, semesterNo } = req.body;
+
+  if (!rollNo || !semesterNo) {
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+
+  try {
+    const result = await prisma.studentSemester.findUnique({
+      where: {
+        rollNo_semesterNo: {
+          rollNo: rollNo,
+          semesterNo: semesterNo,
+        },
+      },
+    });
+
+    if (result?.areCoursesVerified || !result?.hasRegisteredCourses) {
+      res.status(400).json({ message: "Courses are already verified" });
+      return;
+    }
+
+    await prisma.studentCourses.deleteMany({
+      where: {
+        studentId: rollNo,
+        semesterId: semesterNo,
+      },
+    });
+
+    await prisma.studentSemester.update({
+      where: {
+        rollNo_semesterNo: {
+          rollNo: rollNo,
+          semesterNo: semesterNo,
+        },
+      },
+      data: {
+        hasRegisteredCourses: false,
+      },
+    });
+
+    res.status(200).json({ message: "Courses unregistered successfully" });
+  } catch (error: any) {
+    res.status(500).json({ message: "Some error occurred", error });
+  }
+};
+
+export const rejectCourses: RequestHandler = async (
+  req: Request,
+  res: Response
+) =>{
+  const { rollNo, semesterNo } = req.body;
+
+  if (!rollNo || !semesterNo) {
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+
+  try{
+    const result = await prisma.studentSemester.findUnique({
+      where: {
+        rollNo_semesterNo: {
+          rollNo: rollNo,
+          semesterNo: semesterNo,
+        },
+      },
+    });
+
+    if (!result?.hasRegisteredCourses){
+      res.status(400).json({ message: "Student has not registered any course in this semester"});
+      return;
+    }
+
+    await prisma.studentCourses.deleteMany({
+      where: {
+        studentId: rollNo,
+        semesterId: semesterNo,
+      },
+    });
+
+    await prisma.studentSemester.update({
+      where: {
+        rollNo_semesterNo: {
+          rollNo: rollNo,
+          semesterNo: semesterNo,
+        },
+      },
+      data: {
+        hasRegisteredCourses: false,
+      },
+    });
+
+    res.status(200).json({ message: "Courses unregistered successfully" });
+  }catch (error: any) {
+    res.status(500).json({ message: "Some error occurred", error });
+  }
+};
+
+export const getRegisteredCourses: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const { rollNo, semesterNo } = req.body;
+  if (!rollNo || !semesterNo) {
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+  try {
+    const hasRegisteredCourses = await prisma.studentSemester.findUnique({
+      where: {
+        rollNo_semesterNo: {
+          rollNo: rollNo,
+          semesterNo: semesterNo,
+        },
+      },
+    });
+
+    if (!hasRegisteredCourses?.hasRegisteredCourses) {
+      res.status(200).json({ message: "Success", hasRegisteredCourses: false });
+      return;
+    }
+
+    const registeredCourses = await prisma.studentCourses.findMany({
+      where: {
+        studentId: rollNo,
+        semesterId: semesterNo,
+      },
+      include: {
+        course: true,
+      },
+    });
+
+    const result = registeredCourses.map(
+      ({
+        studentId,
+        courseCode,
+        isVerified,
+        status,
+        grade,
+        marks,
+        classesTaken,
+        classesAttended,
+        semesterId,
+        programmeId,
+        ...rest
+      }) => rest.course
+    );
+
+    res.status(200).json({
+      message: "Success",
+      hasRegisteredCourses: true,
+      courses: result,
+    });
+  } catch (error: any) {}
+};
+
 export const getCoursesByStudent: RequestHandler = async (
   req: Request,
   res: Response
 ) => {
-  const email  = req.query.email as string;
-  const rollNo = email.split('@')[0].toUpperCase();
+  const email = req.query.email as string;
+  const rollNo = email.split("@")[0].toUpperCase();
   try {
     const courses = await prisma.studentCourses.findMany({
       where: {
@@ -403,7 +652,7 @@ export const getCoursesByStudent: RequestHandler = async (
         grade: true,
         status: true,
         course: {
-          select:{
+          select: {
             code: true,
             name: true,
             credits: true,
@@ -412,8 +661,7 @@ export const getCoursesByStudent: RequestHandler = async (
             tutorial: true,
             practical: true,
             courseType: true,
-
-          }
+          },
         },
       },
     });
@@ -424,13 +672,16 @@ export const getCoursesByStudent: RequestHandler = async (
   }
 };
 
-export const gradeStudent: RequestHandler = async ( req: Request, res: Response) => {
+export const gradeStudent: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
   const { rollNo, courseCode, grade, marks } = req.body;
-  if( !rollNo || !courseCode || !grade || !marks){
+  if (!rollNo || !courseCode || !grade || !marks) {
     res.status(400).json({ message: "All fields are required" });
     return;
   }
-  try{
+  try {
     const result = await prisma.studentCourses.updateMany({
       where: {
         studentId: rollNo,
@@ -444,71 +695,69 @@ export const gradeStudent: RequestHandler = async ( req: Request, res: Response)
     });
 
     res.status(200).json({ message: "Graded successfully", result });
-  }catch (error: any) {
+  } catch (error: any) {
     res.status(500).json({ message: "Some error occurred", error });
   }
-}
+};
 
-export const markStudentAttendance:RequestHandler = async ( req: Request, res: Response) => {
-  const { rollNo, courseCode, semester, classesAttended} = req.body;
+export const markStudentAttendance: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const { rollNo, courseCode, semester, classesAttended } = req.body;
   let classesTaken = req.body.classesTaken;
-  if( !rollNo || !courseCode || !semester || !classesAttended){
+  if (!rollNo || !courseCode || !semester || !classesAttended) {
     res.status(400).json({ message: "All fields are required" });
     return;
   }
 
-  try{
+  try {
     const currentAttendance = await prisma.studentCourses.findUnique({
-      where:{
-        studentId_semesterId_courseCode:{
+      where: {
+        studentId_semesterId_courseCode: {
           studentId: rollNo,
           courseCode: courseCode,
-          semesterId: semester
-        }
+          semesterId: semester,
+        },
       },
-      select:{
+      select: {
         classesAttended: true,
         classesTaken: true,
         studentId: true,
         courseCode: true,
-      }
+      },
     });
 
-    if(!currentAttendance){
+    if (!currentAttendance) {
       res.status(404).json({ message: "Course not found" });
       return;
     }
 
-    if(currentAttendance.classesTaken === null && !classesTaken){
+    if (currentAttendance.classesTaken === null && !classesTaken) {
       res.status(400).json({ message: "Classes taken is required" });
       return;
-    }else if(currentAttendance.classesTaken){
+    } else if (currentAttendance.classesTaken) {
       classesTaken = currentAttendance.classesTaken + 1;
     }
-    
 
     const newAttendance = await prisma.studentCourses.update({
-      where:{
-        studentId_semesterId_courseCode:{
+      where: {
+        studentId_semesterId_courseCode: {
           studentId: rollNo,
           courseCode: courseCode,
-          semesterId: semester
+          semesterId: semester,
         },
       },
-      data:{
+      data: {
         classesAttended: classesAttended,
-        classesTaken: classesTaken
-      }
-    })
+        classesTaken: classesTaken,
+      },
+    });
 
-    res.status(200).json({ message: "Attendance marked successfully", newAttendance });
-
-    
-  }catch (error: any) {
+    res
+      .status(200)
+      .json({ message: "Attendance marked successfully", newAttendance });
+  } catch (error: any) {
     res.status(500).json({ message: "Some error occurred", error });
   }
-}
-
-
-
-
+};

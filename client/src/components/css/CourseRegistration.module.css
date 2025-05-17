@@ -1,0 +1,44 @@
+.header{
+    border: 2px solid rgb(82, 79, 79);
+    border-top: none;
+    border-radius: 5px;
+}
+
+.courses{
+    padding:0.5em;
+}
+
+.course-data{
+    padding-left: 0.5em;
+}
+
+.course-name{
+    padding-left:0.5em;
+}
+
+.button{
+    cursor: pointer;
+    padding: 0.5em 1em 0.5em 1em;
+    border-radius: 0.5em;
+    transition: transform 0.3s ease-in;
+}
+
+.button:hover{
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+}
+
+.main-div{
+    padding:0.5em;
+}
+
+.course-list{
+    overflow-y: auto;
+}
+
+.register-button{
+    padding: 1em;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    cursor: pointer;
+}

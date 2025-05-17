@@ -49,3 +49,4 @@ export const assignCourseToInstructor: RequestHandler = async (
     });
   }
 };
+

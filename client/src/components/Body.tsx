@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router'
-import styles from "./Body.module.css"
+import styles from "./css/Body.module.css"
 import Header from './Header'
 
 const Body = () => {

@@ -9,7 +9,7 @@ export async function getCoursesByProgramme(programmeId: string) {
             {
               programmeId: programmeId,
             },
-            { headers: { "Content-Type": "application/json" } }
+            { headers: { "Content-Type": "application/json" }, withCredentials: true }
           );
           
           return response.data.courses;
@@ -21,7 +21,7 @@ export async function getCoursesByProgramme(programmeId: string) {
 export async function getStudentOverview(email: string) {
     try{
         const response = await axios.get(
-            `${baseURL}/common/get-overview?email=${email}`
+            `${baseURL}/common/get-overview?email=${email}`,{withCredentials: true}
           );
           
           return response.data;
@@ -33,7 +33,7 @@ export async function getStudentOverview(email: string) {
 export async function getStudentCourses(email: string) {
     try{
         const response = await axios.get(
-            `${baseURL}/common/get-student-courses?email=${email}`
+            `${baseURL}/common/get-student-courses?email=${email}`,{withCredentials: true}
           );
           
           return response.data;

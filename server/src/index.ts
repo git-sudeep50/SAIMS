@@ -44,9 +44,9 @@ app.get('/api', (req: Request, res: Response) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/admin', authorizeRoles("ADMIN"), adminRouter);
-app.use('/api/student', studentRouter);
+app.use('/api/student',verifyToken, studentRouter);
 app.use('/api/advisor', advisorRouter);
-app.use('/api/common', commonRouter);
+app.use('/api/common',verifyToken, commonRouter);
 app.use('/api/instructor', instructorRouter);
 
 

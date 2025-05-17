@@ -4,7 +4,14 @@ import otpGenerator from "otp-generator";
 import { redisClient } from "../../index";
 import { sendMailOTP } from "../mail.controller";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
+
+interface AuthenticatedRequest extends Request {
+    cookies: {
+      token?: string;
+    };
+    user?: string | JwtPayload;
+  }
 
 export const checkUserAccount = async (req: Request, res: Response) => {
   const { email } = req.body;
@@ -136,6 +143,7 @@ export const loginUser: RequestHandler = async (
         id: result.id,
         email: result.email,
         roles: result.roles.map((r) => r.role),
+        iat: Math.floor(Date.now() / 1000),
       },
       process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
@@ -146,7 +154,7 @@ export const loginUser: RequestHandler = async (
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -164,7 +172,16 @@ export const logoutUser: RequestHandler = async (
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
   });
   res.json({ message: "Logged out successfully" });
 };
+
+export const getAuthUser: RequestHandler = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const authUser = req.user;
+    res.status(200).json({ message: "Success", data: authUser });
+  } catch (error: any) {
+    res.status(500).json({ message: "Some error occurred", error: error.message });
+  }
+}

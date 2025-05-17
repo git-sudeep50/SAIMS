@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import styles from "./Auth.module.css";
+import styles from "./css/Auth.module.css";
 import validator from "validator";
 import { loginUser, checkUserAccount, signUpUser } from "../utils/authUtilityFunctions";
 import { useDispatch } from "react-redux";
@@ -66,16 +66,19 @@ const Auth: React.FC = () => {
 
   const signup = async ( ) => {
     setSubmitting(true);
+    setStepperSteps({ ...stepperSteps, step2: true});
     try {
       const response = await signUpUser(signupData.email,signupData.OTP, signupData.password);
       const userData = {
         email: response.data.email,
         roles: response.data.roles,
       };
+      setStepperSteps({ ...stepperSteps, step3: true });
       dispatch(setCredentials(userData));
       console.log(userData);
     } catch (err) {
       console.log(err);
+      setStepperSteps({ ...stepperSteps,step2: false, step3: false });
     }
     setSubmitting(false);
   }
@@ -173,15 +176,21 @@ const Auth: React.FC = () => {
                   }`}
                 ></div>
                 <div
-                  className={`circle h-7 w-7 rounded-[50%] bg-amber-50 flex items-center justify-center`}
+                  className={`circle h-7 w-7 rounded-[50%] bg-amber-50 flex items-center justify-center ${
+                    stepperSteps.step2 ? "bg-green-500" : "bg-amber-100"
+                  }`}
                 >
                   2
                 </div>
                 <div
-                  className={`bar h-4 w-[30%] bg-amber-100 rounded-md`}
+                  className={`bar h-4 w-[30%] bg-amber-100 rounded-md ${
+                    stepperSteps.step2 ? "bg-green-500" : "bg-amber-100"
+                  }`}
                 ></div>
                 <div
-                  className={`circle h-7 w-7 rounded-[50%] bg-amber-50 flex items-center justify-center`}
+                  className={`circle h-7 w-7 rounded-[50%] bg-amber-50 flex items-center justify-center ${
+                    stepperSteps.step3 ? "bg-green-500" : "bg-amber-100"
+                  }`}
                 >
                   3
                 </div>

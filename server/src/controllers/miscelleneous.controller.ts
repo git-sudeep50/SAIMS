@@ -1,11 +1,11 @@
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import { prisma } from "../db/postgres/prismaClient";
 
 export const createProgramme = async (req: Request, res: Response) => {
   try {
-    const { name, duration, deptName } = req.body;
+    const { name, duration, deptName, domain } = req.body;
 
-    if(!name || !duration ||!deptName){
+    if(!name || !duration ||!deptName || !domain){
       res.status(400).json({
         msg:"All fields are required"
       });
@@ -14,6 +14,7 @@ export const createProgramme = async (req: Request, res: Response) => {
     const existingData = await prisma.programme.findFirst({
       where: {
         name: name,
+        domain: domain,
         department: {
           is: {
             name: deptName,
@@ -49,6 +50,7 @@ export const createProgramme = async (req: Request, res: Response) => {
       data: {
         name,
         duration,
+        domain,
         department: {
           connect: { id: deptInfo.id },
         },
@@ -84,14 +86,51 @@ export const createProgramme = async (req: Request, res: Response) => {
   }
 };
 
-// export const createDepartment = async (req:Request, res: Response) =>{
-//   try{
-//     const { } = req.body;
+export const createDepartment = async (req: Request, res: Response) => {
+  try {
+    console.log(req.body);
+    const { name, schoolId }:{name:string,schoolId:string} = req.body;
 
-//   }catch(err:any){
+    if(!name){
+      res.status(400).json({
+        msg:"All fields are required"
+      });
+      return;
+    }
 
-//   }
-// }
+    const existingData = await prisma.department.findFirst({
+      where: {
+        name: name,
+        
+      },
+    });
+
+    if (existingData) {
+      res.status(400).json({
+        message: `Department ${name} already exists`,
+      });
+      return;
+    }
+
+    const newDepartment = await prisma.department.create({
+      data: {
+        name,
+        schoolId: schoolId
+      },
+    });
+
+    res.status(200).json({
+      msg: "Department data entered successfully",
+      data: newDepartment,
+    });
+
+    } catch (err: any) {
+      res.status(500).json({
+        message: "Some error occurred",
+        error: err.message,
+      });
+    }
+}
 
 export const getStudentOverview = async (req: Request, res: Response) => {
   const  email  = req.query.email as string;
@@ -109,8 +148,14 @@ export const getStudentOverview = async (req: Request, res: Response) => {
         },
         department: {
           select:{
-            name: true
-          }
+            name: true,
+            school:{
+              select:{
+                name: true
+              }
+            }
+          },
+          
         }
       }
     })
@@ -172,3 +217,76 @@ export const getStudentOverview = async (req: Request, res: Response) => {
       })
   }
 };
+
+
+export const getEmployeeOverview:RequestHandler = async (req: Request, res: Response) => {
+  const { email } = req.params;
+
+  if (!email) {
+    res.status(400).json({ error: 'Missing email in URL params' });
+    return;
+  }
+
+  try {
+    // Get user and associated employee
+    const user = await prisma.authentication.findUnique({
+      where: { email: email },
+      include: {
+        roles: true,
+        employee: true,
+      },
+    });
+
+    if (!user || !user.employeeId || !user.employee) {
+      res.status(404).json({ error: 'User or associated employee not found' });
+      return;
+    }
+
+    const employeeId = user.employeeId;
+    const roles = user.roles.map((r) => r.role);
+
+    const result: any = {
+      employee: user.employee,
+    };
+
+    if (roles.includes("INSTRUCTOR")) {
+      const taughtCourses = await prisma.instructorMapping.findMany({
+        where: { instructorId: employeeId },
+        include: {
+          course: true,
+        },
+      });
+
+      result.instructorCourses = taughtCourses.map((m) => m.course);
+    }
+
+    // Fetch Advised Semesters
+    if (roles.includes("ADVISOR")) {
+      const advisedSemesters = await prisma.advisorMapping.findMany({
+        where: { advisorId: employeeId },
+        include: {
+          semester: true,
+          programme: true,
+        },
+      });
+
+      result.advisedSemesters = advisedSemesters.map((s) => ({
+        programme: s.programme,
+        semester: s.semester,
+      }));
+    }
+
+    // For Admin, you can just return employee info (already included)
+    if (roles.includes("ADMIN")) {
+      result.adminInfo = { note: 'Admin access granted', employeeId };
+    }
+
+    res.status(200).json(result);
+    return;
+  } catch (error) {
+    console.error('Error in getEmployeeOverview:', error);
+    res.status(500).json({ error: 'Internal server error' });
+    return;
+  }
+};
+

@@ -60,6 +60,7 @@ model Employee {
 model Programme {
   id           String    @id @default(uuid())
   name         String
+  domain       String?
   duration     Int       
   department   Department @relation(fields: [departmentId], references: [id])
   departmentId String
@@ -122,6 +123,8 @@ model StudentSemester{
   semester Semester @relation(fields: [semesterNo, programmeId], references: [semesterNo, programmeId])
   semesterNo Int
   programmeId String
+  hasRegisteredCourses Boolean? @default(false)
+  areCoursesVerified Boolean? @default(false)
 
   sgpa Float?
 

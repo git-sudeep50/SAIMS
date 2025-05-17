@@ -103,7 +103,7 @@ const Course: React.FC<CourseProps> = ({
   );
 };
 
-const Overview: React.FC = () => {
+const EmployeeOverview: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useSelector((state: any) => state.theme.theme);
   const email = useSelector((state: any) => state.auth.user.email);
@@ -117,7 +117,7 @@ const Overview: React.FC = () => {
     //   );
     //   setCourseData(data);
     // })();
-
+    console.log("hgahaddhjavhavavdx");
     (async () => {
       const overviewData: any = await getStudentOverview(email);
       setOverview(overviewData);
@@ -130,13 +130,13 @@ const Overview: React.FC = () => {
     })();
   }, []);
 
-  console.log("COURSE DATA", data);
-  console.log("Overview DATA", overview);
+  console.log("HELLO DATA", data);
+  console.log("DATA", overview);
 
   const cards = [
     {
       id: 1,
-      title: "Total Credits",
+      title: "Total Courses Taught",
       value: overview?.programmeData?.minimumCredits,
     },
     {
@@ -247,4 +247,4 @@ const Overview: React.FC = () => {
   );
 };
 
-export default Overview;
+export default EmployeeOverview;
