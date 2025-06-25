@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
   const [activeButton, setActiveButton] = useState("");
   const theme = useSelector((state: any) => state.theme.theme);
   const name = useSelector(
-    (state: any) => state?.overview?.overviewData?.studentData?.name
+    (state: any) => state?.overview?.overviewData?.studentData?.name || state?.overview?.overviewData?.employee?.name
   );
   const user = useSelector((state: any) => state.auth.user);
   console.log("AUTH", user.roles.includes("STUDENT"));

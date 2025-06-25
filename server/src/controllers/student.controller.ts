@@ -146,3 +146,46 @@ export const getStudentDataByRollNumber = async (
     });
   }
 };
+
+export const getStudentsBySemester = async (req: Request, res: Response) => {
+  try {
+    const { semester, programmeId } = req.query;
+
+    if (!semester || !programmeId) {
+      res.status(400).json({ message: "All fields are required" });
+      return;
+    }
+
+    const students = await prisma.$queryRaw`
+      SELECT * FROM "Student"
+      WHERE "programmeId" = ${programmeId}
+        AND "currentSemesterNo" = ${Number(semester)}
+    `;
+
+    res.status(200).json(students);
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const updateSemester = async (req: Request, res: Response) => {
+  const { departmentId } = req.body;
+
+  if (!departmentId) {
+    return res.status(400).json({ message: "departmentId is required" });
+  }
+
+  try {
+    await prisma.$executeRaw`
+      UPDATE "Student"
+      SET "currentSemesterNo" = "currentSemesterNo" + 1
+      WHERE "departmentId" = ${departmentId}
+    `;
+
+    res.status(200).json({ message: `Semesters updated successfully for department ${departmentId}.` });
+  } catch (error) {
+    console.error("Error updating semesters:", error);
+    res.status(500).json({ message: "Failed to update semesters." });
+  }
+};

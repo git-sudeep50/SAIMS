@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./css/CourseRegistration.module.css";
 import { useSelector } from "react-redux";
 import {
@@ -139,6 +139,7 @@ const CourseRegistration = () => {
   const [givenCourses, setGivenCourses] = useState<CourseData[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<CourseData[]>([]);
   const [courseRegistrationData, setCourseRegistrationData] = useState<any>();
+  const [credits, setCredits] = useState(0);
   const [flag, setFlag] = useState(false);
 
   const handleRegister = async () => {
@@ -150,6 +151,14 @@ const CourseRegistration = () => {
         semesterNo: semesterInfo?.currentSemesterNo,
         programmeId: semesterInfo?.programmeId,
       };
+      const credits = selectedCourses?.reduce(
+        (acc: number, course: CourseData) => acc + course?.credits,
+        0
+      );
+      if (credits > 22) {
+        window.alert("Cannot register more than 25 credits");
+        return;
+      }
       const response = await registerCourses({ ...payload });
       setFlag(!flag);
       console.log("Response", response);
@@ -245,12 +254,13 @@ const CourseRegistration = () => {
         <div
           className={`${styles.header} flex flex-col justify-center relative items-center w-full h-20 border-slate-400`}
         >
+          <span className={` absolute top-[30%] left-3 text-3xl font-semibold text-white`}>Credits: {selectedCourses?.reduce((acc, course) => acc + course.credits, 0)}</span>
           <h1 className={`text-3xl font-semibold text-white`}>
-            Course Registration is closed
+            Course Registration
           </h1>
-          <h2 className={`text-2xl text-white`}>
+          {/* <h2 className={`text-2xl text-white`}>
             Your Course Advisor is Bhabesh Nath
-          </h2>
+          </h2> */}
           <button
             onClick={() => handleRegister()}
             className={`${styles["register-button"]} bg-[var(--signature-color)] absolute top-[30%] right-3 text-sm font-semibold text-black rounded-sm`}
@@ -259,7 +269,7 @@ const CourseRegistration = () => {
           </button>
         </div>
         {/* If course registration is open */}
-        <div className={`${styles["course-selection"]} w-full h-[79vh] flex`}>
+        <div className={`${styles["course-selection"]} relative w-full h-[79vh] flex`}>
           <div
             className={`${styles["courses"]} ${styles["given-courses"]}  w-[50%] h-[100%] flex flex-col items-center`}
           >

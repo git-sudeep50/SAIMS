@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styles from "./css/Overview.module.css";
 import { useSelector, useDispatch } from "react-redux";
-import { getCoursesByProgramme, getStudentCourses, getStudentOverview } from "../utils/overviewUtilityFunctions";
+import { getCoursesByProgramme, getEmployeeOverview, getStudentCourses, getStudentOverview } from "../utils/overviewUtilityFunctions";
 import { setOverviewData } from "../utils/overviewSlice";
 
 type CourseProps = {
@@ -108,7 +108,7 @@ const EmployeeOverview: React.FC = () => {
   const theme = useSelector((state: any) => state.theme.theme);
   const email = useSelector((state: any) => state.auth.user.email);
   // const [courseData, setCourseData] = useState<CourseData[]>([]);
-  const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [overview, setOverview] = useState<any | null>(null);
   const [data, setData] = useState<CourseData[]>([]);
   useEffect(() => {
     // (async () => {
@@ -117,9 +117,8 @@ const EmployeeOverview: React.FC = () => {
     //   );
     //   setCourseData(data);
     // })();
-    console.log("hgahaddhjavhavavdx");
     (async () => {
-      const overviewData: any = await getStudentOverview(email);
+      const overviewData: any = await getEmployeeOverview(email);
       setOverview(overviewData);
       dispatch(setOverviewData(overviewData));
     })();
@@ -130,30 +129,27 @@ const EmployeeOverview: React.FC = () => {
     })();
   }, []);
 
-  console.log("HELLO DATA", data);
-  console.log("DATA", overview);
-
   const cards = [
     {
       id: 1,
       title: "Total Courses Taught",
-      value: overview?.programmeData?.minimumCredits,
+      value: overview?.instructorCourses?.length || 0,
     },
     {
       id: 2,
-      title: "Credits Completed",
-      value: overview?.totalCreditsCompleted,
+      title: "Total Semesters Advised",
+      value: overview?.advisedSemesters?.length || 0,
     },
     {
       id: 3,
-      title: "CGPA",
-      value: overview?.studentData?.cgpa,
+      title: "Department",
+      value: overview?.studentData?.cgpa || "CSE",
     },
-    {
-      id: 4,
-      title: "Courses Completed",
-      value: overview?.coursesCompleted,
-    },
+    // {
+    //   id: 4,
+    //   title: "Courses Completed",
+    //   value: overview?.coursesCompleted || 0,
+    // },
   ];
 
   return (
@@ -164,9 +160,6 @@ const EmployeeOverview: React.FC = () => {
     >
       <div className="flex justify-between">
         <h1 className="text-white text-2xl font-semibold">Overview</h1>
-        <h1 className="text-white text-2xl font-semibold">
-          Roll Number: {overview?.studentData?.enrollmentNumber}
-        </h1>
       </div>
       <div className={`${styles["credits-card-div"]} h-55 w-[100%]`}>
         {cards.map((card) => (
@@ -187,25 +180,25 @@ const EmployeeOverview: React.FC = () => {
         >
           <span>
             <h2 className="text-white text-xl font-semibold">
-              Currently Enrolled Courses
+              Courses Taught
             </h2>
           </span>
           <div className={`${styles["course"]} w-full h-[90%] `}>
-            {data.length === 0 ? (
+            {overview?.instructorCourses?.length === 0 ? (
               <h2>Loading...</h2>
             ) : (
-              data.filter(course => course.status?.trim().toLowerCase() === "ongoing").map((course) => {
+              overview?.instructorCourses?.map((course:any) => {
                 console.log("COURSE", course);
                 return (
                   <Course
-                    key={course.course.code}
-                    name={course.course.name}
-                    code={course.course.code}
-                    type={course.course.courseType}
-                    credits={course.course.credits}
-                    lecture={course.course.lecture}
-                    tutorial={course.course.tutorial}
-                    practical={course.course.practical}
+                    key={course?.code}
+                    name={course?.name}
+                    code={course?.code}
+                    type={course?.courseType}
+                    credits={course?.credits}
+                    lecture={course?.lecture}
+                    tutorial={course?.tutorial}
+                    practical={course?.practical}
                   />
                 );
               })

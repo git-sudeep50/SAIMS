@@ -1,0 +1,26 @@
+.container{
+    padding: 1em;
+    display: flex;
+    gap: 5em;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.card{
+    background-color: var(--overlay-color);
+}
+
+.btn{
+    background-color: var(--signature-color);
+    color: black;
+    border-radius: 0.5em;
+    padding: 0.5em 1em 0.5em 1em;
+    cursor: pointer;
+    transition: transform 0.3s ease-in;
+}
+
+.btn:hover{
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+    background-color: rgb(93, 231, 93);
+}

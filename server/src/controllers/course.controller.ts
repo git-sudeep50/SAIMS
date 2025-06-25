@@ -1,5 +1,6 @@
 import { Request, Response, RequestHandler } from "express";
 import { prisma } from "../db/postgres/prismaClient";
+import { sendMailMessage } from "./mail.controller";
 
 export const createCourse: RequestHandler = async (
   req: Request,
@@ -471,8 +472,14 @@ export const verifyCourses: RequestHandler = async (
       },
     });
 
+    const email = rollNo + "tezu.ac.in";
+    console.log(email);
+
+    await sendMailMessage(email, "Courses verified successfully");
+
     res.status(200).json({ message: "Courses verified successfully", result });
   } catch (error: any) {
+    console.log(error);
     res.status(500).json({ message: "Some error occurred", error });
   }
 };
@@ -598,6 +605,20 @@ export const getRegisteredCourses: RequestHandler = async (
       },
     });
 
+
+    if(hasRegisteredCourses){
+      const result = await prisma.studentCourses.findFirst({
+        where:{
+          studentId: rollNo,
+          semesterId: semesterNo
+        }
+      })
+
+      if(result?.isVerified){
+        
+      }
+    }
+    
     if (!hasRegisteredCourses?.hasRegisteredCourses) {
       res.status(200).json({ message: "Success", hasRegisteredCourses: false });
       return;
@@ -613,21 +634,12 @@ export const getRegisteredCourses: RequestHandler = async (
       },
     });
 
-    const result = registeredCourses.map(
-      ({
-        studentId,
-        courseCode,
-        isVerified,
-        status,
-        grade,
-        marks,
-        classesTaken,
-        classesAttended,
-        semesterId,
-        programmeId,
-        ...rest
-      }) => rest.course
-    );
+    const result = registeredCourses.map(({ course, isVerified }) => ({
+  ...course,
+  isVerified,
+}));
+
+    console.log(result);
 
     res.status(200).json({
       message: "Success",
@@ -705,7 +717,7 @@ export const markStudentAttendance: RequestHandler = async (
   res: Response
 ) => {
   const { rollNo, courseCode, semester, classesAttended } = req.body;
-  let classesTaken = req.body.classesTaken;
+  let classesTaken = req?.body?.classesTaken;
   if (!rollNo || !courseCode || !semester || !classesAttended) {
     res.status(400).json({ message: "All fields are required" });
     return;
@@ -759,5 +771,30 @@ export const markStudentAttendance: RequestHandler = async (
       .json({ message: "Attendance marked successfully", newAttendance });
   } catch (error: any) {
     res.status(500).json({ message: "Some error occurred", error });
+  }
+};
+
+export const getOngoingCourseStudents: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const { courseCode } = req.body;
+  if (!courseCode) {
+    res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+  
+  try{
+    const result = await prisma.studentCourses.findMany({
+      where: {
+        courseCode: courseCode,
+        status: "ongoing",
+        isVerified: true,
+      }
+    });
+
+    res.status(200).json({ message: "Success", result });
+  }catch(error: any){
+    res.status(500).json({ message: "Failed to get students", error });
   }
 };

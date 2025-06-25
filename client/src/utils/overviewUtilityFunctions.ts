@@ -30,6 +30,18 @@ export async function getStudentOverview(email: string) {
     }
 }
 
+export async function getEmployeeOverview(email: string) {
+    try{
+        const response = await axios.get(
+            `${baseURL}/common/get-employee-overview/${email}`,{withCredentials: true}
+          );
+          
+          return response.data;
+    }catch(err){
+        console.log(err);
+    }
+}
+
 export async function getStudentCourses(email: string) {
     try{
         const response = await axios.get(
